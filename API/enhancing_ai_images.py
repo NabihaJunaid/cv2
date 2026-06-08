@@ -1,7 +1,7 @@
 import time
 import requests
 from PIL import Image, ImageEnhance, ImageFilter
-from io import BytestIO
+from io import BytesIO
 from config import HF_API_KEY
 
 MODELS = [
