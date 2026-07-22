@@ -1,6 +1,7 @@
 from config import HF_API_KEY
 import requests, base64, os, re, time
-from PIL import Imagefrom colorama import init, Fore, Style
+from PIL import Image 
+from colorama import init, Fore, Style
 
 init(autoreset=True)
 
@@ -74,3 +75,63 @@ def _ensure_sentence_end(text:str) -> str:
     if t and t[-1] not in ".!?":
         t += "."
     return t
+
+def generate_text(prompt: str, max_new_tokens: int = 220) -> str:
+    txt, err = _run_models(TEXT_MODELS, [{"role": "user", "content": prompt}], max_tokens = max_new_tokens, temperature = 0.4)
+    if not txt:
+        raise Exception(err)
+    return txt
+
+def generate_exact_sentence(prompt: str, n_words: int, max_new_tokens: int, tries; int = 6) -> str:
+    last = ""
+    for _ in range(tries):
+        last = generate_text(prompt, max_new_tokens=max_new_tokens)
+        if len(_words(last)) >= n_words:
+            return _ensure_sentence_end(_exact_n_words(last, n_words))
+        prompt += f"\n\nTry again. Ensure at least {n_words} words and end with a period."
+        time.sleep(0.2)
+    return _ensure_sentence_end(_exact_n_words(last, min(n_words, len(_words(last)))))
+
+def get_basic_caption(image_path: str) -> str:
+    print (f"{Fore.YELLOW}" Generating basic caption ...)
+    msgs = [{
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Write one complete sentence describing this image."},
+            {"type": "image_url", "image_url": {"url": _data_url(image_path)}},
+        ],
+    }]
+    cap, err = _run_models(VISION_MODELS, msgs, max_tokens=90, temperature=0.2)
+    return cap if cap else f"[Error] {err}"
+
+def print_menu():
+    print(f"""{Style.BRIGHT}{Fore.GREEN}
+
+================ Image-to-Text Conversion =================
+Select output type:
+1. Caption (5 words)
+2. Description (30 words)
+3. Summary (50 words)
+4. Exit
+=============================================================
+          """)
+    
+    def main():
+        image_path = imput(f"{Fore.BLUE} Enter the path of the image (e.g., test.jpg): {Style.RESET_ALL}")
+        if not os.path.exists(image_path):
+            print(f"{Fore.RED} The file '{image_path}' does not exist.")
+            return
+        try:
+            Image.open(image_path)
+        except Exception as e:
+            print (f"{Fore.RED} Failed to open image: {e}")
+            return
+        
+        basic_caption = get_basic_caption(image_path)
+        print(f"{Fore.YELLOW} Basic caption: {Style.BRIGHT}{basic_caption}\n")
+
+        while True:
+            print_menu()
+            choice = input(f"{Fore.CYAN}Enter your choice (1-4): {Style.RESET_ALL}").strip()
+
+            
