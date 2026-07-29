@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import wave
 import speech_recognition as sr
-from speech_recognition import Audiodata
+from speech_recognition import AudioData
 
 stop_event = threading.Event()
 
